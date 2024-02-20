@@ -1,0 +1,78 @@
+#!/bin/bash
+
+CMD="$1"
+
+notes_dir=${DAYNOTE_DIR:-~/notes}
+daynote="$(date -Idate).txt"
+
+create() {
+  mkdir -p "$notes_dir"
+}
+
+script_dir="$(cd $(dirname BASH_SOURCE[0]) && pwd)"
+
+note_pattern="*"
+
+markers="[*#!X?-]"
+
+set -e -o pipefail
+
+while [[ $# > 0 ]]
+do
+  case $1 in
+  create|filter|daynote|migrate)
+    mode="$1"
+    shift # command
+    ;;
+  --note-pattern|-n)
+    shift # flag
+    note_pattern="$1"
+    shift # value
+    ;;
+  --note-directory|-d)
+    shift # flag
+    notes_dir="$1"
+    shift # value
+    ;;
+  --markers)
+    shift # flag
+    markers="$1"
+    shift # value
+    ;;
+  --to-note)
+    shift # flag
+    daynote="$1"
+    shift # value
+    ;;
+  *)
+    echo "Unknown argument: $1"
+    exit 1
+    ;;
+  esac
+done
+
+case $mode in
+  create)
+    create
+    ;;
+  daynote)
+    touch "$notes_dir/$daynote"
+    ;;
+  filter)
+    create
+    notes="$(ls "$notes_dir"/$note_pattern)"
+    awk -f "${script_dir}/filter.awk" -v "mq=$markers" $notes
+    ;;
+  migrate)
+    create
+    last_note="$(ls ~/notes/[0-9]* | sort | tail -n 1)"
+    notes="$(ls "$notes_dir"/$note_pattern)"
+    echo >> "$notes_dir/$daynote"
+    echo " - Migrated from $last_note" >> "$notes_dir/$daynote"
+    awk -f "${script_dir}/filter.awk" -v "mq=$markers" "$last_note" >> "$notes_dir/$daynote"
+    ;;
+  *)
+    echo "Unknown command: $1"
+    exit 1
+    ;;
+esac

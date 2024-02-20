@@ -1,0 +1,14 @@
+
+  * parent
+    * child1
+    * child2 
+    # closedChild1
+
+  * parent2
+    - info1
+    - info2
+    ? question1
+    ! blocked1
+      - blocked info1
+      * blocked task
+    X cancelled task
