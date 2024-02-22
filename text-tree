@@ -9,17 +9,55 @@ create() {
   mkdir -p "$notes_dir"
 }
 
+print_usage() {
+cat << EOF
+Usage: $1 COMMAND [OPTIONS]
+
+Commands:
+  create    create the specified or default NOTE_DIR
+  filter    filter NOTE_PATTERN notes according to MARKERS
+  daynote   create and print path to current day note
+  migrate   migrate 
+
+Flags: 
+  --note-pattern NOTE_PATTERN note filename glob pattern
+                              default: *
+  --markers MARKERS           note marker regex pattern
+                              default: '[*!?-]' ("open" items)
+  --note-directory NOTE_DIR   day-notes directory or \$DAYNOTE_DIR
+                              default: '~/notes'
+  --today                     set note pattern to current day-note
+  --help -h                   display this help text
+
+Marker guidance (suggestion):
+ * TODO item
+ # Completed item
+ - Info item
+ ! Blocked item
+ X Cancelled item
+ ? Maybe TODO / nice to have
+ | Quote/verbatim line 
+EOF
+}
+
+set -e -o pipefail
+
 script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 note_pattern="*"
 
-markers="[*#!X?-]"
+# 'open' items only by default
+markers="[*!?-]"
 
-set -e -o pipefail
+if [[ $# == 0 ]]; then
+  echo "No command given"
+  print_usage
+  exit 1
+fi
 
 while [[ $# > 0 ]]
 do
-  case $1 in
+  case "$1" in
   create|filter|daynote|migrate)
     mode="$1"
     shift # command
@@ -48,8 +86,14 @@ do
     shift # flag
     note_pattern="$daynote"
     ;;
+  --help|-h)
+    shift # flag
+    print_usage
+    exit 0
+    ;;
   *)
-    echo "Unknown argument: $1"
+    echo "Unknown argument: '$1'"
+    print_usage
     exit 1
     ;;
   esac
