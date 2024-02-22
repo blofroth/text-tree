@@ -9,7 +9,7 @@ create() {
   mkdir -p "$notes_dir"
 }
 
-script_dir="$(cd $(dirname BASH_SOURCE[0]) && pwd)"
+script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
 note_pattern="*"
 
@@ -44,6 +44,10 @@ do
     daynote="$1"
     shift # value
     ;;
+  --today)
+    shift # flag
+    note_pattern="$daynote"
+    ;;
   *)
     echo "Unknown argument: $1"
     exit 1
@@ -57,6 +61,7 @@ case $mode in
     ;;
   daynote)
     touch "$notes_dir/$daynote"
+    echo "$notes_dir/$daynote"
     ;;
   filter)
     create
@@ -70,6 +75,8 @@ case $mode in
     echo >> "$notes_dir/$daynote"
     echo " - Migrated from $last_note" >> "$notes_dir/$daynote"
     awk -f "${script_dir}/filter.awk" -v "mq=$markers" "$last_note" >> "$notes_dir/$daynote"
+    echo "-- Migrated notes from '$last_note' to:"
+    echo "$notes_dir/$daynote"
     ;;
   *)
     echo "Unknown command: $1"
