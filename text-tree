@@ -58,7 +58,7 @@ fi
 while [[ $# > 0 ]]
 do
   case "$1" in
-  create|filter|daynote|migrate)
+  create|filter|daynote|migrate|archive|diff-archive)
     mode="$1"
     shift # command
     ;;
@@ -110,17 +110,31 @@ case $mode in
   filter)
     create
     notes="$(ls "$notes_dir"/$note_pattern)"
-    awk -f "${script_dir}/filter.awk" -v "mq=$markers" $notes
+    awk -f "${script_dir}/filter.awk" -v "mq=$markers"  $notes
     ;;
   migrate)
     create
-    last_note="$(ls ~/notes/[0-9]* | sort | tail -n 1)"
+    last_note="$(ls "$notes_dir"/[0-9]*.txt | sort | tail -n 1)"
     notes="$(ls "$notes_dir"/$note_pattern)"
     echo >> "$notes_dir/$daynote"
     echo " - Migrated from $last_note" >> "$notes_dir/$daynote"
     awk -f "${script_dir}/filter.awk" -v "mq=$markers" "$last_note" >> "$notes_dir/$daynote"
     echo "-- Migrated notes from '$last_note' to:"
     echo "$notes_dir/$daynote"
+    ;;
+  archive)
+    ARCHIVE_FILENAME="${daynote}.$(date +%s).archive"
+    echo " -- Saving archived copy $ARCHIVE_FILENAME"
+    cp "$notes_dir/$daynote" "$notes_dir/$ARCHIVE_FILENAME"
+
+    echo " -- Filtering for markers in '$daynote'"
+    archive_note="$notes_dir/$daynote"
+    awk -f "${script_dir}/filter.awk" -v "mq=$markers" "$archive_note" > "${archive_note}.tmp"
+    mv "${archive_note}.tmp" "$archive_note"
+    ;;
+  diff-archive)
+    first_day_archive="$(ls "$notes_dir/${daynote}"*.archive | sort | head -n 1)"
+    diff -C 3 --color=always "$first_day_archive" "$notes_dir/$daynote"
     ;;
   *)
     echo "Unknown command: $1"
