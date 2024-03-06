@@ -14,10 +14,14 @@ cat << EOF
 Usage: $1 COMMAND [OPTIONS]
 
 Commands:
-  create    create the specified or default NOTE_DIR
-  filter    filter NOTE_PATTERN notes according to MARKERS
-  daynote   create and print path to current day note
-  migrate   migrate 
+  create        create the specified or default NOTE_DIR
+  filter        filter NOTE_PATTERN notes according to MARKERS
+  daynote       create and print path to current day-note
+  migrate       migrate open items from last day-note to today
+  flatten       flatten the output from NOTE_PATTERN notes,
+                while applying any --at filter
+  archive       move closed items today to NOTE.TIME.archive file
+  diff-archive  diff day-note with first archive note for today
 
 Flags: 
   --note-pattern NOTE_PATTERN note filename glob pattern
@@ -26,7 +30,9 @@ Flags:
                               default: '[*!?-]' ("open" items)
   --note-directory NOTE_DIR   day-notes directory or \$DAYNOTE_DIR
                               default: '~/notes'
-  --today                     set note pattern to current day-note
+  --today                     set NOTE_PATTERN to current day-note
+  --at AT_PATTERN             Find nodes containing @PATTERN, case insensitive
+                              default: not set (show all nodes)
   --help -h                   display this help text
 
 Marker guidance (suggestion):
@@ -55,10 +61,12 @@ if [[ $# == 0 ]]; then
   exit 1
 fi
 
+at_pattern="."
+
 while [[ $# > 0 ]]
 do
   case "$1" in
-  create|filter|daynote|migrate|archive|diff-archive)
+  create|filter|daynote|migrate|archive|diff-archive|flatten)
     mode="$1"
     shift # command
     ;;
@@ -85,6 +93,11 @@ do
   --today)
     shift # flag
     note_pattern="$daynote"
+    ;;
+  --at)
+    at_pattern="@$2"
+    shift 
+    shift
     ;;
   --help|-h)
     shift # flag
@@ -117,7 +130,7 @@ case $mode in
     last_note="$(ls "$notes_dir"/[0-9]*.txt | sort | tail -n 1)"
     notes="$(ls "$notes_dir"/$note_pattern)"
     echo >> "$notes_dir/$daynote"
-    echo " - Migrated from $last_note" >> "$notes_dir/$daynote"
+    echo "  - Migrated from $last_note" >> "$notes_dir/$daynote"
     awk -f "${script_dir}/filter.awk" -v "mq=$markers" "$last_note" >> "$notes_dir/$daynote"
     echo "-- Migrated notes from '$last_note' to:"
     echo "$notes_dir/$daynote"
@@ -135,6 +148,11 @@ case $mode in
   diff-archive)
     first_day_archive="$(ls "$notes_dir/${daynote}"*.archive | sort | head -n 1)"
     diff -C 3 --color=always "$first_day_archive" "$notes_dir/$daynote"
+    ;;
+  flatten)
+    create
+    notes="$(ls "$notes_dir"/$note_pattern)"
+    awk -f "${script_dir}/indent.awk" $notes | grep -i -E "$at_pattern"
     ;;
   *)
     echo "Unknown command: $1"

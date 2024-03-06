@@ -18,7 +18,7 @@ BEGIN {
   nodes[depth] = content;
   
   max_d = (depth > max_d) ? depth : max_d ;
-  print depth;
+  #print depth;
   if (depth < last_depth) {
     for (i=last_depth; i > depth; i--) {
       delete nodes[i]
@@ -35,6 +35,7 @@ BEGIN {
 }
 
 { 
+  printf FILENAME, " "
   for (i=0; i <= max_d; i++) {
     if (i in nodes) {printf markers[i] " " nodes[i] " " };
   }
@@ -49,7 +50,7 @@ BEGIN {
 # spara last depth
 
 END {
-  print "max", max_d
+  # print "max", max_d
 }
 
 # awk -F '[*#!X?-]' '// { print a; a=length($1); print length($1),substr($0,length($1),2), $2 }
