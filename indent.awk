@@ -29,7 +29,7 @@ BEGIN {
   } else {
     num_children[depth-1] = 1
   }
-  # for (i=0; i <= max_d; i++) printf i ":" num_children[i] " " nodes[i];
+  # for (i=0; i <= max_d; i++) printf "%d: %d %s ", i, num_children[i], nodes[i];
   last_depth = depth;
   
 }
@@ -37,7 +37,7 @@ BEGIN {
 { 
   printf "%s: ", FILENAME
   for (i=0; i <= max_d; i++) {
-    if (i in nodes) {printf markers[i] " " nodes[i] " " };
+    if (i in nodes) {printf "%s %s", markers[i], nodes[i] };
   }
   print ""
 }
