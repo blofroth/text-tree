@@ -37,7 +37,7 @@ BEGIN {
 { 
   printf "%s: ", FILENAME
   for (i=0; i <= max_d; i++) {
-    if (i in nodes) {printf "%s %s", markers[i], nodes[i] };
+    if (i in nodes) {printf "%s %s ", markers[i], nodes[i] };
   }
   print ""
 }
